@@ -34,5 +34,14 @@ export class PaymeApi implements ICredentialType {
 			required: true,
 			description: 'ID of your web cashbox (kassa) from the Payme Business merchant account',
 		},
+		{
+			displayName: 'Cashbox Key',
+			name: 'cashboxPassword',
+			type: 'string',
+			typeOptions: { password: true },
+			default: '',
+			description:
+				'Only needed for the Payme Trigger: Payme sends it in the Authorization header. Production: the cashbox key. Test: the TEST_KEY from the sandbox.',
+		},
 	];
 }

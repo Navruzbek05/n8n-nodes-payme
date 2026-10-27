@@ -30,12 +30,24 @@ Inputs:
 
 Output: `url` (the payment link) and `amountTiyin`.
 
+### Payme Trigger (Merchant API)
+
+The trigger node receives the calls that Payme sends to your server (`CheckPerformTransaction`, `CreateTransaction`, `PerformTransaction`, `CancelTransaction`, `CheckTransaction`, `GetStatement`, `SetFiscalData`).
+
+- It checks the `Authorization` header (`Basic Paycom:<cashbox key>`) and the JSON-RPC envelope itself. Wrong credentials or a malformed call are answered with the right Payme error (`-32504`, `-32700`, `-32600`, `-32601`) and **do not start your workflow**.
+- Valid calls start the workflow with `id`, `method` and `params` (`params.amount` is in tiyin).
+- Your workflow must answer Payme. Make the last node return the JSON-RPC reply, for example for `CheckPerformTransaction`: `{ "id": {{ $json.id }}, "result": { "allow": true } }`, or `{ "id": ..., "error": { "code": -31050, "message": { "ru": "...", "uz": "...", "en": "..." }, "data": "order_id" } }`. Alternatively choose "Using Respond to Webhook Node".
+- Payme sends `CreateTransaction`, `PerformTransaction` and `CancelTransaction` **twice** and expects the same answer. Store transactions in a persistent place (database or table) and answer repeated calls from it.
+- Payme sends `Content-Type: text/json`, which n8n does not parse. The node reads the raw body, so you do not need to do anything.
+- Set the trigger's **Production URL** as the "Endpoint URL" of your cashbox in Payme Business.
+
 ## Credentials
 
 1. Register a business and a web cashbox in [Payme Business](https://developer.help.paycom.uz/) (only registered legal entities can open a production cashbox).
 2. In n8n create the credential **Payme API** and fill in:
    - **Environment**: `Test (Sandbox)` or `Production`. The test environment builds links on `test.paycom.uz`, production on `checkout.paycom.uz`.
    - **Merchant ID**: the ID of your web cashbox.
+   - **Cashbox Key**: only for the Payme Trigger. Production: the cashbox key. Test: the `TEST_KEY` from the sandbox.
 
 ## Usage
 
@@ -61,8 +73,8 @@ Developed and run on n8n 2.25.7. Requires a Node.js version supported by your n8
 ## Roadmap
 
 - Receipts through the Subscribe API (create, pay, check, cancel)
-- A trigger node for the Merchant API (the calls Payme sends to your server)
-- Ready-made example workflows
+- Ready-made example workflows (a full Merchant API billing with a database)
+- Checking the trigger against the Payme sandbox (`test.paycom.uz`)
 - Publishing to npm
 
 ## Resources

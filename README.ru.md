@@ -30,12 +30,24 @@ Community-нода [n8n](https://n8n.io/) для [Payme Business](https://payme.
 
 Результат: `url` (ссылка на оплату) и `amountTiyin`.
 
+### Payme Trigger (Merchant API)
+
+Trigger-нода принимает запросы, которые Payme шлёт на ваш сервер (`CheckPerformTransaction`, `CreateTransaction`, `PerformTransaction`, `CancelTransaction`, `CheckTransaction`, `GetStatement`, `SetFiscalData`).
+
+- Нода сама проверяет заголовок `Authorization` (`Basic Paycom:<ключ кассы>`) и формат JSON-RPC. На неверный пароль или битый запрос она отвечает нужной ошибкой Payme (`-32504`, `-32700`, `-32600`, `-32601`) и **не запускает ваш workflow**.
+- Корректный запрос запускает workflow с полями `id`, `method` и `params` (`params.amount` в тийинах).
+- Ответ Payme формирует ваш workflow. Последняя нода должна вернуть JSON-RPC ответ, например для `CheckPerformTransaction`: `{ "id": {{ $json.id }}, "result": { "allow": true } }` или `{ "id": ..., "error": { "code": -31050, "message": { "ru": "...", "uz": "...", "en": "..." }, "data": "order_id" } }`. Можно выбрать и вариант «Using Respond to Webhook Node».
+- Payme шлёт `CreateTransaction`, `PerformTransaction` и `CancelTransaction` **дважды** и ждёт одинаковый ответ. Храните транзакции в постоянном месте (база или таблица) и на повторный вызов отвечайте из неё.
+- Payme присылает `Content-Type: text/json`, который n8n не разбирает. Нода читает «сырое» тело сама, вам ничего делать не нужно.
+- Production URL этой ноды укажите как «Endpoint URL» вашей кассы в Payme Business.
+
 ## Учётные данные
 
 1. Зарегистрируйте бизнес и веб-кассу в [Payme Business](https://developer.help.paycom.uz/) (боевую кассу открывают только юридические лица).
 2. В n8n создайте учётные данные **Payme API** и заполните:
    - **Environment**: `Test (Sandbox)` или `Production`. Тест строит ссылки на `test.paycom.uz`, боевая среда на `checkout.paycom.uz`.
    - **Merchant ID**: ID вашей веб-кассы.
+   - **Cashbox Key**: нужен только для Payme Trigger. Боевая среда: ключ кассы. Тест: `TEST_KEY` из песочницы.
 
 ## Пример
 
@@ -61,8 +73,8 @@ Community-нода [n8n](https://n8n.io/) для [Payme Business](https://payme.
 ## Планы
 
 - Чеки через Subscribe API (создать, оплатить, проверить, отменить)
-- Trigger-нода для Merchant API (запросы, которые Payme шлёт на ваш сервер)
-- Готовые примеры workflow
+- Готовые примеры workflow (полный биллинг Merchant API с базой данных)
+- Проверка Trigger-ноды в песочнице Payme (`test.paycom.uz`)
 - Публикация в npm
 
 ## Ссылки
