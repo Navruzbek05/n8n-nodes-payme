@@ -1,6 +1,6 @@
 {
     "name": "n8n-nodes-payme",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "description": "n8n community node for Payme Business (Uzbekistan): payment links, receipts and merchant webhooks",
     "license": "MIT",
     "homepage": "https://github.com/Navruzbek05/n8n-nodes-payme",
